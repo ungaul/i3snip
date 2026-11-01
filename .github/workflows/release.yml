@@ -59,6 +59,7 @@ jobs:
       - name: Package (rpm)
         if: matrix.kind == 'rpm'
         run: |
+          mkdir -p dist
           cargo install cargo-generate-rpm --locked
           cargo generate-rpm --output dist/
       - uses: actions/upload-artifact@v6
