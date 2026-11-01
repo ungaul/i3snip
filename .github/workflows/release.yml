@@ -26,13 +26,18 @@ jobs:
             install: pacman -Syu --noconfirm --needed base-devel git rust libxcb
           - image: debian:trixie
             kind: deb
-            install: apt-get update && apt-get install -y build-essential git file dpkg-dev cargo libxcb1-dev
+            install: apt-get update && apt-get install -y build-essential git file dpkg-dev curl ca-certificates libxcb1-dev
           - image: fedora:latest
             kind: rpm
             install: dnf install -y gcc git cargo rust libxcb-devel
     steps:
       - name: Install dependencies
         run: ${{ matrix.install }}
+      - name: Install Rust
+        if: matrix.kind == 'deb'
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: actions/checkout@v6
       - name: Set version
         run: |
