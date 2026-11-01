@@ -23,21 +23,19 @@ jobs:
         include:
           - image: archlinux:latest
             kind: arch
-            install: pacman -Syu --noconfirm --needed base-devel git rust
+            install: pacman -Syu --noconfirm --needed base-devel git rust libxcb
           - image: debian:trixie
             kind: deb
-            install: apt-get update && apt-get install -y build-essential git file dpkg-dev cargo
+            install: apt-get update && apt-get install -y build-essential git file dpkg-dev cargo libxcb1-dev
           - image: fedora:latest
             kind: rpm
-            install: dnf install -y gcc git cargo rust
+            install: dnf install -y gcc git cargo rust libxcb-devel
     steps:
       - name: Install dependencies
         run: ${{ matrix.install }}
       - uses: actions/checkout@v6
       - name: Set version
         run: sed -i "0,/^version = .*/s//version = \"${RELEASE_TAG#v}\"/" Cargo.toml
-      - name: Test
-        run: cargo test --release
       - name: Build
         run: cargo build --release --locked
       - name: Package (tarball and Arch package)

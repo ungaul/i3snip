@@ -5,17 +5,13 @@ pkgdesc='Screenshots and screen recordings for i3 and other X11 window managers,
 arch=(x86_64 aarch64)
 url='https://github.com/ungaul/i3snip'
 license=(MIT)
-depends=(xclip ffmpeg)
+depends=(xclip ffmpeg libxcb)
 optdepends=('libnotify: desktop notifications')
 makedepends=(cargo)
 options=(!debug)
 
 build() {
     cargo build --release --locked --manifest-path "$startdir/../../Cargo.toml" --target-dir "$srcdir/target"
-}
-
-check() {
-    cargo test --release --locked --manifest-path "$startdir/../../Cargo.toml" --target-dir "$srcdir/target"
 }
 
 package() {

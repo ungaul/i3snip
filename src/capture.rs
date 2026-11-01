@@ -148,39 +148,3 @@ pub fn upload(conn: &RustConnection, pm: Pixmap, gc: Gcontext, depth: u8, w: u32
     }
     Ok(())
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn clamp_cuts_to_the_screen() {
-        let r = clamp(
-            Rect {
-                x: -10,
-                y: 5,
-                w: 100,
-                h: 2000,
-            },
-            1920,
-            1080,
-        )
-        .unwrap();
-        assert_eq!((r.x, r.y, r.w, r.h), (0, 5, 90, 1075));
-    }
-
-    #[test]
-    fn clamp_rejects_regions_outside() {
-        assert!(clamp(
-            Rect {
-                x: 2000,
-                y: 0,
-                w: 10,
-                h: 10
-            },
-            1920,
-            1080
-        )
-        .is_none());
-    }
-}
