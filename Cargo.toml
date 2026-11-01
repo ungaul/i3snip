@@ -1,0 +1,43 @@
+[package]
+name = "i3snip"
+version = "0.1.0"
+edition = "2021"
+description = "Screenshots and screen recordings for i3 and other X11 window managers, with a dimmed region selector"
+license = "MIT"
+repository = "https://github.com/ungaul/i3snip"
+readme = "README.md"
+
+[dependencies]
+x11rb = { version = "0.13", features = ["allow-unsafe-code", "randr"] }
+png = "0.17"
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
+panic = "abort"
+
+[package.metadata.deb]
+name = "i3snip"
+maintainer = "ungaul <ungaul@users.noreply.github.com>"
+section = "utils"
+priority = "optional"
+extended-description = "Freezes and dims the screen, lets you drag a region, and keeps it bright. Photos go to the clipboard and a PNG, videos are recorded with ffmpeg."
+depends = "$auto, xclip, ffmpeg"
+recommends = "libnotify-bin"
+assets = [
+    ["target/release/i3snip", "usr/bin/i3snip", "755"],
+    ["README.md", "usr/share/doc/i3snip/README.md", "644"],
+    ["LICENSE.md", "usr/share/doc/i3snip/copyright", "644"],
+]
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/i3snip", dest = "/usr/bin/i3snip", mode = "755" },
+    { source = "README.md", dest = "/usr/share/doc/i3snip/README.md", mode = "644", doc = true },
+    { source = "LICENSE.md", dest = "/usr/share/licenses/i3snip/LICENSE.md", mode = "644", license = true },
+]
+
+[package.metadata.generate-rpm.requires]
+xclip = "*"
+"/usr/bin/ffmpeg" = "*"

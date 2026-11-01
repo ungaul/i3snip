@@ -1,0 +1,25 @@
+pkgname=i3snip
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Screenshots and screen recordings for i3 and other X11 window managers, with a dimmed region selector'
+arch=(x86_64 aarch64)
+url='https://github.com/ungaul/i3snip'
+license=(MIT)
+depends=(xclip ffmpeg)
+optdepends=('libnotify: desktop notifications')
+makedepends=(cargo)
+options=(!debug)
+
+build() {
+    cargo build --release --locked --manifest-path "$startdir/../../Cargo.toml" --target-dir "$srcdir/target"
+}
+
+check() {
+    cargo test --release --locked --manifest-path "$startdir/../../Cargo.toml" --target-dir "$srcdir/target"
+}
+
+package() {
+    install -Dm755 "$srcdir/target/release/i3snip" "$pkgdir/usr/bin/i3snip"
+    install -Dm644 "$startdir/../../README.md" "$pkgdir/usr/share/doc/$pkgname/README.md"
+    install -Dm644 "$startdir/../../LICENSE.md" "$pkgdir/usr/share/licenses/$pkgname/LICENSE.md"
+}

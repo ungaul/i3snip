@@ -1,0 +1,83 @@
+name: release
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || format('v0.1.{0}', github.run_number) }}
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    container: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: archlinux:latest
+            kind: arch
+            install: pacman -Syu --noconfirm --needed base-devel git rust
+          - image: debian:trixie
+            kind: deb
+            install: apt-get update && apt-get install -y build-essential git file dpkg-dev cargo
+          - image: fedora:latest
+            kind: rpm
+            install: dnf install -y gcc git cargo rust
+    steps:
+      - name: Install dependencies
+        run: ${{ matrix.install }}
+      - uses: actions/checkout@v6
+      - name: Set version
+        run: sed -i "0,/^version = .*/s//version = \"${RELEASE_TAG#v}\"/" Cargo.toml
+      - name: Test
+        run: cargo test --release
+      - name: Build
+        run: cargo build --release --locked
+      - name: Package (tarball and Arch package)
+        if: matrix.kind == 'arch'
+        run: |
+          VERSION=${RELEASE_TAG#v}
+          mkdir -p dist
+          tar -czf dist/i3snip-$VERSION-x86_64.tar.gz -C target/release i3snip -C ../.. README.md LICENSE.md
+          sed -i "s/^pkgver=.*/pkgver=$VERSION/" packaging/arch/PKGBUILD
+          useradd -m builder
+          chown -R builder .
+          su builder -c "cd packaging/arch && makepkg -f --nodeps --noconfirm"
+          cp packaging/arch/*.pkg.tar.zst dist/
+      - name: Package (deb)
+        if: matrix.kind == 'deb'
+        run: |
+          cargo install cargo-deb --locked
+          cargo deb --no-build --output dist/
+      - name: Package (rpm)
+        if: matrix.kind == 'rpm'
+        run: |
+          cargo install cargo-generate-rpm --locked
+          cargo generate-rpm --output dist/
+      - uses: actions/upload-artifact@v6
+        with:
+          name: package-${{ matrix.kind }}
+          path: dist/*
+
+  publish:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: packages
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          files: packages/*
