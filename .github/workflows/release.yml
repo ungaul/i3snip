@@ -35,7 +35,9 @@ jobs:
         run: ${{ matrix.install }}
       - uses: actions/checkout@v6
       - name: Set version
-        run: sed -i "0,/^version = .*/s//version = \"${RELEASE_TAG#v}\"/" Cargo.toml
+        run: |
+          sed -i "0,/^version = .*/s//version = \"${RELEASE_TAG#v}\"/" Cargo.toml
+          sed -i "/^name = \"i3snip\"/{n;s/^version = .*/version = \"${RELEASE_TAG#v}\"/}" Cargo.lock
       - name: Build
         run: cargo build --release --locked
       - name: Package (tarball and Arch package)
